@@ -43,15 +43,23 @@ def updateUser(email: str, name: str):
     return records[0]["u"] if records else None
 
 
-def deleteUser(email: str) -> bool:
+def deleteUser(email: str, detach: bool = False) -> bool:
     """Devuelve True si se borró el usuario y False si no existía.
 
-    Neo4j rechaza el borrado si el usuario tiene relaciones.
+    Sin detach Neo4j rechaza el borrado si el usuario tiene relaciones.
+    Con detach=True se borran también sus relaciones.
     """
-    query = """
-    MATCH (u:User {email: $email})
-    DELETE u
-    RETURN count(*) AS deleted
-    """
+    if detach:
+        query = """
+        MATCH (u:User {email: $email})
+        DETACH DELETE u
+        RETURN count(*) AS deleted
+        """
+    else:
+        query = """
+        MATCH (u:User {email: $email})
+        DELETE u
+        RETURN count(*) AS deleted
+        """
     records = db.query(query, {"email": email})
     return records[0]["deleted"] > 0

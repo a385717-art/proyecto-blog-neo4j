@@ -61,15 +61,26 @@ def updateArticle(
     return records[0]["a"] if records else None
 
 
-def deleteArticle(title: str, date: str) -> bool:
+def deleteArticle(title: str, date: str, detach: bool = False) -> bool:
     """Devuelve True si se borró el nodo y False si no existía.
 
-    Neo4j rechaza el borrado si el nodo tiene relaciones.
+    Sin detach Neo4j rechaza el borrado si el nodo tiene relaciones.
+    Con detach=True se borran sus relaciones y también sus comentarios.
     """
-    query = """
-    MATCH (a:Article {title: $title, date: date($date)})
-    DELETE a
-    RETURN count(*) AS deleted
-    """
+    if detach:
+        query = """
+        MATCH (a:Article {title: $title, date: date($date)})
+        OPTIONAL MATCH (a)-[:HAS_COMMENT]->(c:Comment)
+        WITH a, collect(c) AS comments
+        FOREACH (c IN comments | DETACH DELETE c)
+        DETACH DELETE a
+        RETURN count(*) AS deleted
+        """
+    else:
+        query = """
+        MATCH (a:Article {title: $title, date: date($date)})
+        DELETE a
+        RETURN count(*) AS deleted
+        """
     records = db.query(query, {"title": title, "date": date})
     return records[0]["deleted"] > 0

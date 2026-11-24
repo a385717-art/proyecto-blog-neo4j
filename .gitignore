@@ -1,2 +1,4 @@
 # El archivo local de configuración puede contener credenciales.
 .env
+.venv/
+__pycache__/
