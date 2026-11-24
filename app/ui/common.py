@@ -34,7 +34,7 @@ def showError(error, duplicate="Ya existe un registro con ese identificador."):
     if isinstance(error, ConstraintError) and "already exists" in error.message:
         messagebox.showerror("Dato repetido", duplicate)
     elif isinstance(error, CypherSyntaxError) and (
-        "Date" in error.message or "valid values" in error.message
+        "date" in (error.message or "").lower() or "valid values" in (error.message or "")
     ):
         messagebox.showerror("Fecha inválida", "La fecha no es válida. Usa el formato AAAA-MM-DD.")
     elif isinstance(error, (ServiceUnavailable, SessionExpired)):

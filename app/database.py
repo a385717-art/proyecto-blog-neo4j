@@ -9,7 +9,9 @@ class Neo4jConnection:
 
     def __init__(self):
         self._driver = GraphDatabase.driver(
-            Config.NEO4J_URI, auth=(Config.NEO4J_USER, Config.NEO4J_PASSWORD)
+            Config.NEO4J_URI, auth=(Config.NEO4J_USER, Config.NEO4J_PASSWORD),
+            # para que la ventana no se trabe tanto si se cae el internet
+            max_transaction_retry_time=5, connection_timeout=10,
         )
 
     def close(self):

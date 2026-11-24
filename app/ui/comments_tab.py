@@ -75,6 +75,13 @@ class CommentsTab(ttk.Frame):
             return
         self.authorBox["values"] = list(self.users)
         self.articleBox["values"] = list(self.articles)
+        # si lo elegido ya no existe se limpia el combo
+        # (con un comentario seleccionado los combos solo muestran sus datos)
+        if not self.selected:
+            if self.author.get() not in self.users:
+                self.author.set("")
+            if self.article.get() not in self.articles:
+                self.article.set("")
 
     def refresh(self):
         self.table.delete(*self.table.get_children())
@@ -124,9 +131,13 @@ class CommentsTab(ttk.Frame):
         article = self.article.get()
         if not checkFields({"Comentario": name, "URL": url, "Autor": author, "Artículo": article}):
             return
-        title, date = self.articles[article]
         try:
+            title, date = self.articles[article]
             comment = addComment(self.users[author], title, date, name, url)
+        except KeyError:
+            # el autor o el artículo se borró en otra pestaña
+            messagebox.showerror("No encontrado", "El autor o el artículo ya no existen. Presiona Refrescar.")
+            return
         except Exception as e:
             showError(e, duplicate=f"Ya existe un comentario con la URL {url}.")
             return

@@ -1,1 +1,1 @@
-"""Paquete reservado para la interfaz de usuario del blog."""
+"""Interfaz gráfica del blog con Tkinter."""

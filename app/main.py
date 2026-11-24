@@ -9,9 +9,20 @@ except ImportError:
     print("No se encontró Tkinter. En Arch o CachyOS se instala con: sudo pacman -S tk")
     sys.exit(1)
 
-from neo4j.exceptions import AuthError, ServiceUnavailable
+try:
+    from neo4j.exceptions import AuthError, ServiceUnavailable
 
-from config import Config
+    from config import Config
+except ImportError as e:
+    # falta instalar algo de requirements.txt
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror(
+        "Falta un paquete",
+        f"No está instalado el paquete {e.name}.\nInstálalo con: pip install -r requirements.txt",
+    )
+    root.destroy()
+    sys.exit(1)
 
 
 def connectionError(error):

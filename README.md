@@ -1,57 +1,121 @@
 # proyecto-blog-neo4j
 
-Proyecto de blog que usa Neo4j para guardar datos como nodos y relaciones. Incluye operaciones CRUD para usuarios, etiquetas, artículos, categorías y comentarios.
+Aplicación en Python para administrar un blog guardado en Neo4j (AuraDB). Tiene el CRUD de usuarios, artículos, comentarios, etiquetas y categorías, las relaciones entre ellos, una interfaz gráfica hecha con Tkinter y unos archivos de Cypher con datos de prueba y consultas.
+
+## Modelo
+
+Los nodos son `User`, `Article`, `Comment`, `Tag` y `Category`. Estas son las relaciones que usamos:
+
+| Relación | Tipo |
+| --- | --- |
+| `(User)-[:WROTE]->(Article)` | 1-N, cada artículo tiene un solo autor |
+| `(User)-[:WROTE]->(Comment)` | 1-N |
+| `(Article)-[:HAS_COMMENT]->(Comment)` | 1-N |
+| `(Article)-[:HAS_TAG]->(Tag)` | N-N |
+| `(Article)-[:IN_CATEGORY]->(Category)` | N-N |
+
+Cada nodo se busca por un identificador. El usuario por su correo, la etiqueta y la categoría por su nombre, el comentario por su URL y el artículo por su título y su fecha juntos. Puede haber dos artículos con el mismo título si tienen fecha distinta.
 
 ## Estructura
 
-| Archivo o carpeta | Responsabilidad |
+| Archivo o carpeta | Qué tiene |
 | --- | --- |
-| `app/config.py` | Carga los parámetros de conexión desde el entorno o el archivo local `.env`. |
-| `app/database.py` | Comparte el controlador de Neo4j y devuelve los registros que generan las consultas. |
-| `app/crud/user.py` | Crea, consulta, actualiza y borra usuarios por correo. |
-| `app/crud/tags.py` | Crea, consulta, renombra y borra etiquetas por nombre. |
-| `app/crud/articles.py` | Gestiona artículos por título y fecha. La fecha se recibe como `AAAA-MM-DD` y se guarda como `DATE` en Neo4j. |
-| `app/crud/categories.py` | Gestiona categorías por nombre. |
-| `app/crud/comments.py` | Gestiona comentarios por URL. |
-| `app/main.py` y `app/ui/` | Punto de entrada e interfaz pendientes de implementación. |
-| `cypher/` | Restricciones del grafo y archivos reservados para datos de prueba y consultas de ejemplo. |
+| `app/main.py` | Abre la ventana. Antes revisa que se pueda conectar a Neo4j y si no, muestra un mensaje. |
+| `app/config.py` | Lee los datos de conexión del archivo `.env`. |
+| `app/database.py` | La conexión a Neo4j. Todas las consultas pasan por `db.query()` con parámetros. |
+| `app/crud/user.py`, `tags.py`, `categories.py`, `comments.py`, `articles.py` | Crear, listar, buscar, actualizar y borrar cada tipo de nodo. |
+| `app/crud/relations.py` | Las relaciones: asignar autor, agregar comentarios, poner y quitar etiquetas y categorías, el detalle de un artículo y los listados por usuario, etiqueta y categoría. |
+| `app/ui/menu.py` | La ventana principal con una pestaña por entidad. |
+| `app/ui/users_tab.py` | Pestaña de usuarios. |
+| `app/ui/articles_tab.py` | Pestaña de artículos con el panel de detalle. |
+| `app/ui/comments_tab.py` | Pestaña de comentarios. |
+| `app/ui/name_url_tab.py` | Pestaña que se usa para categorías y para etiquetas, porque las dos solo tienen nombre y URL. |
+| `app/ui/common.py` | Cosas que usan todas las pestañas: mensajes de error y validar campos vacíos y fechas. |
+| `cypher/01_constraints.cypher` | Restricciones para que no se repitan los identificadores. |
+| `cypher/02_datos_prueba.cypher` | Datos de prueba: 4 usuarios, 6 artículos, 8 comentarios, 5 etiquetas y 3 categorías. |
+| `cypher/03_consultas.cypher` | 10 consultas de ejemplo sobre esos datos. |
 
-## Configuración local
+## Instalación
 
-Instala el controlador de Neo4j y el lector de archivos `.env`.
+Se necesita Python 3.10 o más nuevo.
 
 ```bash
-python -m pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Copia `.env.example` a `.env` en la raíz del proyecto si aún no tienes un archivo local. Estas son las variables que lee `app/config.py`.
+En fish el entorno se activa con `source .venv/bin/activate.fish` y en Windows con `.venv\Scripts\activate`.
+
+La interfaz usa Tkinter. En Windows ya viene con Python, pero en Linux a veces hay que instalarlo aparte:
+
+```bash
+sudo pacman -S tk            # Arch o CachyOS
+sudo apt install python3-tk  # Ubuntu o Debian
+```
+
+Para revisar que quedó, `python -c "import tkinter"` no debe marcar error.
+
+## Archivo .env
+
+Copia `.env.example` a `.env` en la raíz del proyecto y llena los datos de tu instancia de Aura:
 
 ```dotenv
-NEO4J_URI=neo4j+s://TU_INSTANCIA.databases.neo4j.io
-NEO4J_USER=neo4j
+NEO4J_URI=neo4j+s://TU_ID_DE_INSTANCIA.databases.neo4j.io
+NEO4J_USER=TU_ID_DE_INSTANCIA
 NEO4J_PASSWORD=
-NEO4J_DATABASE=neo4j
+NEO4J_DATABASE=TU_ID_DE_INSTANCIA
 ```
 
-Para Neo4j Aura, usa la URI y las credenciales de tu instancia. Si ejecutas Neo4j localmente, usa `bolt://localhost:7687`. `NEO4J_DATABASE` es opcional y su valor por defecto es `neo4j`.
+En Aura el usuario y el nombre de la base son el ID de la instancia, o sea lo que sale en la URI antes de `.databases.neo4j.io`. Si usas Neo4j instalado en tu computadora en lugar de Aura, la URI es `bolt://localhost:7687` y ahí el usuario y la base sí son `neo4j` (si quitas la línea de `NEO4J_DATABASE` también se usa `neo4j`). El `.env` está en el `.gitignore` para que la contraseña no se suba.
 
-Aplica las sentencias de `cypher/01_constraints.cypher` en la misma base antes de usar el CRUD. Las restricciones garantizan que los identificadores de cada tipo de nodo sean únicos.
+## Cargar la base con los archivos de cypher/
 
-## Cómo funciona el CRUD
+Los archivos se corren en orden. Abre tu instancia en la consola de Aura, entra a Query, pega el contenido del archivo y córrelo.
 
-Los módulos CRUD construyen consultas Cypher y pasan los valores por separado a `db.query()`. La conexión ejecuta la consulta en la base configurada y devuelve sus registros.
+1. `01_constraints.cypher` crea las restricciones: no se pueden repetir correos, nombres de etiquetas o categorías, URLs de comentarios ni artículos con el mismo título y fecha. Si ya existen no pasa nada.
+2. `02_datos_prueba.cypher` carga los datos de prueba con todas sus relaciones. Usa `MERGE`, así que si se corre dos veces no se duplica nada.
+3. `03_consultas.cypher` tiene 10 consultas y cada una tiene arriba un comentario de qué busca. Conviene correrlas de una en una para ver el resultado de cada una.
 
-- Crear devuelve el nodo creado.
-- Las etiquetas admiten una URL opcional. Al actualizar una etiqueta, omitir la URL conserva la existente.
-- Listar devuelve una lista de nodos. Las etiquetas se ordenan por nombre.
-- Buscar y actualizar devuelven el nodo encontrado o `None` si no existe.
-- Borrar devuelve `True` si se eliminó el nodo y `False` si no existía. Neo4j rechaza el borrado de nodos que tienen relaciones.
+## Abrir la interfaz
 
-Puedes probar los módulos desde la raíz del proyecto con `PYTHONPATH=app python`.
+Desde la raíz del proyecto y con el entorno activado:
+
+```bash
+python app/main.py
+```
+
+Si falta algo en el `.env`, la contraseña está mal o no hay internet, sale un mensaje en lugar de la ventana.
+
+La ventana tiene cinco pestañas: Usuarios, Artículos, Categorías, Etiquetas y Comentarios. Cada una tiene una tabla y botones para Crear, Actualizar, Borrar, Refrescar y Limpiar. Para editar algo primero se selecciona en la tabla. El identificador no se puede cambiar desde la interfaz (el correo del usuario, el nombre de la etiqueta o categoría, la URL del comentario y el título y fecha del artículo).
+
+En la pestaña de Artículos, al seleccionar uno aparece a la derecha su detalle con el autor, las etiquetas, las categorías y los comentarios. Desde ahí se le asigna autor, se le ponen o quitan etiquetas y categorías y se le agregan comentarios.
+
+Las fechas se escriben como `AAAA-MM-DD`, por ejemplo `2026-11-24`. Si la fecha está mal escrita o no existe, la interfaz avisa antes de mandarla a Neo4j.
+
+## Borrar nodos con relaciones
+
+Las funciones de borrar del CRUD (`deleteUser`, `deleteArticle`, `deleteTag`, `deleteCategory` y `deleteComment`) tienen un parámetro `detach`.
+
+- Con `detach=False`, que es el valor por defecto, Neo4j no deja borrar un nodo que todavía tiene relaciones y regresa un error.
+- Con `detach=True` se borran sus relaciones y después el nodo. Al borrar un artículo también se borran sus comentarios para que no queden comentarios sueltos.
+
+En la interfaz primero se pregunta si de verdad quieres borrar. Si el nodo tiene relaciones sale otra pregunta que dice qué va a pasar, y solo si contestas que sí se borra con `detach=True`. Al borrar un usuario sus artículos y comentarios se quedan sin autor, y al borrar una etiqueta o una categoría los artículos solo se quedan sin ella. Los comentarios se borran directo con sus relaciones porque siempre están ligados a un autor y a un artículo.
+
+## Otras cosas del CRUD
+
+- Crear regresa el nodo creado.
+- Buscar y actualizar regresan el nodo, o `None` si no existe.
+- Borrar regresa `True` si se borró y `False` si no existía.
+- La URL de las etiquetas es opcional. Si se actualiza una etiqueta con `url=None` se le quita la URL.
+- Las fechas de los artículos se guardan como `DATE`. Neo4j las regresa como `neo4j.time.Date` y para mostrarlas se pasan a texto con `.iso_format()`.
+
+## Probar el CRUD desde la consola
+
+Desde la raíz del proyecto se puede abrir Python con `PYTHONPATH=app python` (en fish es igual) y probar las funciones:
 
 ```python
-from crud.tags import getTags
-from crud.user import getUsers
+from crud import getTags, getUsers
 from database import db
 
 try:

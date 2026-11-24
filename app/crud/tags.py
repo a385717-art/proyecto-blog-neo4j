@@ -34,14 +34,14 @@ def getTagByName(name: str):
     return records[0]["t"] if records else None
 
 
-def updateTag(name: str, new_name: str, url: str | None = None):
-    """Renombra el nodo y actualiza su URL si se indica.
+def updateTag(name: str, new_name: str, url: str | None):
+    """Actualiza el nombre y la URL y devuelve el nodo o None si no existe.
 
-    Devuelve la etiqueta actualizada o None si no existe.
+    Si url es None se le quita la URL a la etiqueta.
     """
     query = """
     MATCH (t:Tag {name: $name})
-    SET t.name = $new_name, t.url = coalesce($url, t.url)
+    SET t.name = $new_name, t.url = $url
     RETURN t
     """
     records = db.query(query, {"name": name, "new_name": new_name, "url": url})

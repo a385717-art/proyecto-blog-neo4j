@@ -154,6 +154,9 @@ class ArticlesTab(ttk.Frame):
         self.authorBox["values"] = list(self.users)
         self.tagBox["values"] = tags
         self.categoryBox["values"] = categories
+        # si el autor elegido ya no existe se limpia el combo
+        if self.author.get() not in self.users:
+            self.author.set("")
         self.showDetail()
 
     def refresh(self):
@@ -301,6 +304,9 @@ class ArticlesTab(ttk.Frame):
             return
         try:
             ok = linkArticleAuthor(self.users[self.author.get()], *self.selected)
+        except KeyError:
+            messagebox.showerror("No encontrado", "Ese usuario ya no existe. Presiona Refrescar.")
+            return
         except Exception as e:
             showError(e)
             return
@@ -374,6 +380,9 @@ class ArticlesTab(ttk.Frame):
                 comment = addComment(
                     self.users[author.get()], *self.selected, fields["Comentario"], fields["URL"]
                 )
+            except KeyError:
+                messagebox.showerror("No encontrado", "Ese autor ya no existe. Presiona Refrescar.")
+                return
             except Exception as e:
                 showError(e, duplicate=f"Ya existe un comentario con la URL {fields['URL']}.")
                 return
