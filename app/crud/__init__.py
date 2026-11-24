@@ -21,6 +21,20 @@ from .comments import (
     getComments,
     updateComment,
 )
+from .relations import (
+    addCategoryToArticle,
+    addComment,
+    addTagToArticle,
+    getArticleDetail,
+    getArticlesByCategory,
+    getArticlesByTag,
+    getArticlesByUser,
+    getCommentsByArticle,
+    getCommentsWithInfo,
+    linkArticleAuthor,
+    removeCategoryFromArticle,
+    removeTagFromArticle,
+)
 from .tags import (
     createTag,
     deleteTag,
@@ -62,4 +76,16 @@ __all__ = [
     "getUserByEmail",
     "updateUser",
     "deleteUser",
+    "linkArticleAuthor",
+    "addComment",
+    "addTagToArticle",
+    "removeTagFromArticle",
+    "addCategoryToArticle",
+    "removeCategoryFromArticle",
+    "getArticleDetail",
+    "getArticlesByUser",
+    "getArticlesByTag",
+    "getArticlesByCategory",
+    "getCommentsByArticle",
+    "getCommentsWithInfo",
 ]

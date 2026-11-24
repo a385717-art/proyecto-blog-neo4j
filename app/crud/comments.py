@@ -44,15 +44,23 @@ def updateComment(url: str, name: str, new_url: str):
     return records[0]["c"] if records else None
 
 
-def deleteComment(url: str) -> bool:
+def deleteComment(url: str, detach: bool = False) -> bool:
     """Devuelve True si se borró el nodo y False si no existía.
 
-    Neo4j rechaza el borrado si el nodo tiene relaciones.
+    Sin detach Neo4j rechaza el borrado si el nodo tiene relaciones.
+    Con detach=True se borran también sus relaciones.
     """
-    query = """
-    MATCH (c:Comment {url: $url})
-    DELETE c
-    RETURN count(*) AS deleted
-    """
+    if detach:
+        query = """
+        MATCH (c:Comment {url: $url})
+        DETACH DELETE c
+        RETURN count(*) AS deleted
+        """
+    else:
+        query = """
+        MATCH (c:Comment {url: $url})
+        DELETE c
+        RETURN count(*) AS deleted
+        """
     records = db.query(query, {"url": url})
     return records[0]["deleted"] > 0

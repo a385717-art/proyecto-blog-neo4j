@@ -17,6 +17,10 @@ class Neo4jConnection:
         if self._driver is not None:
             self._driver.close()
 
+    def verify(self):
+        # revisa que se pueda conectar, sin reintentos para fallar rápido
+        self._driver.verify_connectivity()
+
     def query(self, cypher_query, parameters=None):
         """Ejecuta Cypher con parámetros y devuelve la lista de registros."""
         records, summary, keys = self._driver.execute_query(

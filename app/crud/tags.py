@@ -48,15 +48,23 @@ def updateTag(name: str, new_name: str, url: str | None = None):
     return records[0]["t"] if records else None
 
 
-def deleteTag(name: str) -> bool:
+def deleteTag(name: str, detach: bool = False) -> bool:
     """Devuelve True si se borró la etiqueta y False si no existía.
 
-    Neo4j rechaza el borrado si la etiqueta tiene relaciones.
+    Sin detach Neo4j rechaza el borrado si la etiqueta tiene relaciones.
+    Con detach=True se borran también sus relaciones.
     """
-    query = """
-    MATCH (t:Tag {name: $name})
-    DELETE t
-    RETURN count(*) AS deleted
-    """
+    if detach:
+        query = """
+        MATCH (t:Tag {name: $name})
+        DETACH DELETE t
+        RETURN count(*) AS deleted
+        """
+    else:
+        query = """
+        MATCH (t:Tag {name: $name})
+        DELETE t
+        RETURN count(*) AS deleted
+        """
     records = db.query(query, {"name": name})
     return records[0]["deleted"] > 0
