@@ -152,6 +152,22 @@ def getArticlesByCategory(name: str):
     return [record["a"] for record in db.query(query, {"name": name})]
 
 
+def getCommentsWithInfo():
+    """Devuelve todos los comentarios con su autor y el artículo al que pertenecen.
+
+    Si un comentario no tiene autor o artículo, esos campos vienen en None.
+    """
+    query = """
+    MATCH (c:Comment)
+    OPTIONAL MATCH (u:User)-[:WROTE]->(c)
+    OPTIONAL MATCH (a:Article)-[:HAS_COMMENT]->(c)
+    RETURN c.name AS name, c.url AS url, u.name AS author, u.email AS email,
+        a.title AS title, a.date AS date
+    ORDER BY c.name, c.url
+    """
+    return [record.data() for record in db.query(query)]
+
+
 def getCommentsByArticle(title: str, date: str):
     """Devuelve los comentarios del artículo ordenados por nombre y URL."""
     query = """

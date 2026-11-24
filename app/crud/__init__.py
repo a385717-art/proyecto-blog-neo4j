@@ -30,6 +30,7 @@ from .relations import (
     getArticlesByTag,
     getArticlesByUser,
     getCommentsByArticle,
+    getCommentsWithInfo,
     linkArticleAuthor,
     removeCategoryFromArticle,
     removeTagFromArticle,
@@ -86,4 +87,5 @@ __all__ = [
     "getArticlesByTag",
     "getArticlesByCategory",
     "getCommentsByArticle",
+    "getCommentsWithInfo",
 ]
